@@ -40,10 +40,10 @@ class CommandSetProfile(
         callback?.result(r)?.run()
         // Send SMS notification if ProfileSwitch is coming from NS
         val profileSwitch = repository.getEffectiveProfileSwitchActiveAt(dateUtil.now()).blockingGet()
-        if (profileSwitch is ValueWrapper.Existing && r.enacted && hasNsId && !config.NSCLIENT) {
-            if (smsCommunicator.isEnabled())
-                smsCommunicator.sendNotificationToAllNumbers(rh.gs(app.aaps.core.ui.R.string.profile_set_ok))
-        }
+        // if (profileSwitch is ValueWrapper.Existing && r.enacted && hasNsId && !config.NSCLIENT) {
+        //     if (smsCommunicator.isEnabled())
+        //         smsCommunicator.sendNotificationToAllNumbers(rh.gs(app.aaps.core.ui.R.string.profile_set_ok))
+        // }
     }
 
     override fun status(): String = rh.gs(app.aaps.core.ui.R.string.set_profile)
