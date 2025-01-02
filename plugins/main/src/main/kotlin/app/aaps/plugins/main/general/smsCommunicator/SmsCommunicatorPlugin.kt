@@ -1314,4 +1314,8 @@ class SmsCommunicatorPlugin @Inject constructor(
             addPreference(AdaptiveSwitchPreference(ctx = context, booleanKey = BooleanKey.SmsReportPumpUnreachable, summary = R.string.smscommunicator_report_pump_unreachable_summary, title = R.string.smscommunicator_pump_unreachable))
         }
     }
+
+    override fun getLatestMsg(phoneNumber: String): Sms? {
+        return messages.lastOrNull { it.phoneNumber == phoneNumber }
+    }
 }

@@ -1195,4 +1195,19 @@ class SmsCommunicatorPluginTest : TestBaseWithProfile() {
         smsCommunicatorPlugin.addPreferenceScreen(preferenceManager, screen, context, null)
         assertThat(screen.preferenceCount).isGreaterThan(0)
     }
+
+    @Test
+    fun getLatestMsgTest() {
+        val sms1 = Sms("1234", "Test message 1")
+        val sms2 = Sms("5678", "Test message 2")
+        val sms3 = Sms("1234", "Test message 3")
+
+        smsCommunicatorPlugin.messages.add(sms1)
+        smsCommunicatorPlugin.messages.add(sms2)
+        smsCommunicatorPlugin.messages.add(sms3)
+
+        assertThat(smsCommunicatorPlugin.getLatestMsg("1234")).isEqualTo("Test message 3")
+        assertThat(smsCommunicatorPlugin.getLatestMsg("5678")).isEqualTo("Test message 2")
+        assertThat(smsCommunicatorPlugin.getLatestMsg("9999")).isNull()
+    }
 }

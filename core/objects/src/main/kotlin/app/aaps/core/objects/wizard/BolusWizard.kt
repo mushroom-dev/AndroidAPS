@@ -2,7 +2,10 @@ package app.aaps.core.objects.wizard
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.text.Spanned
+import android.widget.Toast
 import app.aaps.core.data.model.BCR
 import app.aaps.core.data.model.OE
 import app.aaps.core.data.model.TE
@@ -552,16 +555,24 @@ class BolusWizard @Inject constructor(
                         if (preferences.get(BooleanKey.SmsAllowRemoteCommands) && !phoneNumber.isNullOrBlank()) {
                             rh.gs(app.aaps.core.ui.R.string.sms_bolus_notification).formatColor(context, rh, app.aaps.core.ui.R.attr.warningColor)
                             smsCommunicator.sendSMS(Sms(phoneNumber, rh.gs(app.aaps.core.ui.R.string.bolus) + " " + insulin))
+
+                            val bolusDelivered = waitForSmsResponse(ctx, phoneNumber, insulin)
+                            // TODO: if bolus not delivered then fail, check if it works
+                            if (!bolusDelivered) {
+                                uiInteraction.runAlarm("Error", rh.gs(app.aaps.core.ui.R.string.treatmentdeliveryerror), app.aaps.core.ui.R.raw.boluserror)
+                                carbs = 0.0 // TODO: check if creates entry in treatment tab
+                            }
                             insulin = 0.0 // commandQueue will process carbs
                         }
 
-                        commandQueue.bolus(this, object : Callback() {
-                            override fun run() {
-                                if (!result.success) {
-                                    uiInteraction.runAlarm(result.comment, rh.gs(app.aaps.core.ui.R.string.treatmentdeliveryerror), app.aaps.core.ui.R.raw.boluserror)
+                        if (insulin > 0.0 || carbs > 0.0)
+                            commandQueue.bolus(this, object : Callback() {
+                                override fun run() {
+                                    if (!result.success) {
+                                        uiInteraction.runAlarm(result.comment, rh.gs(app.aaps.core.ui.R.string.treatmentdeliveryerror), app.aaps.core.ui.R.raw.boluserror)
+                                    }
                                 }
-                            }
-                        })
+                            })
                     }
                     bolusCalculatorResult?.let { persistenceLayer.insertOrUpdateBolusCalculatorResult(it).blockingGet() }
                 }
@@ -633,6 +644,41 @@ class BolusWizard @Inject constructor(
         //Apply constraints
         calculatedCorrection = min(constraintChecker.getMaxBolusAllowed().value(), calculatedCorrection)
         calculatedCorrection = max(-constraintChecker.getMaxBolusAllowed().value(), calculatedCorrection)
+    }
+
+    private fun waitForSmsResponse(ctx: Context, phoneNumber: String, insulin: Double, timeout: Long = 60000L): Boolean
+    {
+        val handler = Handler(Looper.getMainLooper())
+        val startTime = System.currentTimeMillis()
+
+        fun checkSmsResponse(): Boolean {
+            val elapsedTime = System.currentTimeMillis() - startTime
+            if (elapsedTime >= timeout) {
+                Toast.makeText(ctx, "No response received within 60 seconds", Toast.LENGTH_LONG).show()
+                return false
+            }
+            val foo = smsCommunicator.isEnabled()
+            aapsLogger.debug(LTag.SMS, "Fetching responses")
+            val response = smsCommunicator.getLatestMsg(phoneNumber) // TODO check receive time
+            if (response?.received == true) {
+                aapsLogger.debug(LTag.SMS, response.text)
+                val expectedResponse = rh.gs(app.aaps.core.ui.R.string.bolus_delivered_successfully, insulin)
+                if (response.text.contains("OK")) {
+                    Toast.makeText(ctx, "SMS response received: OK", Toast.LENGTH_LONG).show()
+                    return true
+                } else {
+                    Toast.makeText(ctx, "SMS response received: Failed", Toast.LENGTH_LONG).show()
+                    return false
+                }
+            } else {
+                aapsLogger.debug(LTag.SMS, "Got no messages")
+                handler.postDelayed({ checkSmsResponse() }, 1000) // Check again after 1 second
+            }
+
+            return false // TODO: not needed?
+        }
+
+        return checkSmsResponse()
     }
 
 }
