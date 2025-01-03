@@ -51,6 +51,7 @@ import app.aaps.core.validators.preferences.AdaptiveSwitchPreference
 import app.aaps.plugins.aps.autotune.AutotunePlugin
 import app.aaps.plugins.automation.AutomationPlugin
 import app.aaps.plugins.configuration.maintenance.MaintenancePlugin
+import app.aaps.plugins.main.general.smsCommunicator.SimpleSmsCommunicatorPlugin
 import app.aaps.plugins.main.general.smsCommunicator.SmsCommunicatorPlugin
 import app.aaps.plugins.main.skins.SkinProvider
 import dagger.android.support.AndroidSupportInjection
@@ -74,6 +75,7 @@ class MyPreferenceFragment : PreferenceFragmentCompat(), OnSharedPreferenceChang
 
     @Inject lateinit var automationPlugin: AutomationPlugin
     @Inject lateinit var autotunePlugin: AutotunePlugin
+    @Inject lateinit var simpleSmsCommunicatorPlugin: SimpleSmsCommunicatorPlugin
     @Inject lateinit var smsCommunicatorPlugin: SmsCommunicatorPlugin
     @Inject lateinit var maintenancePlugin: MaintenancePlugin
     @Inject lateinit var skinProvider: SkinProvider
@@ -146,6 +148,7 @@ class MyPreferenceFragment : PreferenceFragmentCompat(), OnSharedPreferenceChang
             addPumpScreen(rootKey)
             addPreferencesIfEnabled(activePlugin.activeInsulin as PluginBase, rootKey)
             activePlugin.getSpecificPluginsList(PluginType.SYNC).forEach { addPreferencesIfEnabled(it, rootKey) }
+            addPreferencesIfEnabled(simpleSmsCommunicatorPlugin, rootKey)
             addPreferencesIfEnabled(smsCommunicatorPlugin, rootKey)
             addPreferencesIfEnabled(automationPlugin, rootKey)
             addPreferencesIfEnabled(autotunePlugin, rootKey)

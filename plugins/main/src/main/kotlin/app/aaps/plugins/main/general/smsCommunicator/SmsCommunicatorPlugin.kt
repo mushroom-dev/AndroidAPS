@@ -92,19 +92,20 @@ import javax.inject.Singleton
 import kotlin.math.max
 import kotlin.math.min
 
+
 @Singleton
 class SmsCommunicatorPlugin @Inject constructor(
     private val injector: HasAndroidInjector,
     aapsLogger: AAPSLogger,
     rh: ResourceHelper,
-    private val smsManager: SmsManager?,
-    private val aapsSchedulers: AapsSchedulers,
+    smsManager: SmsManager?,
+    aapsSchedulers: AapsSchedulers,
     private val preferences: Preferences,
     private val constraintChecker: ConstraintsChecker,
-    private val rxBus: RxBus,
+    rxBus: RxBus,
     private val profileFunction: ProfileFunction,
     private val profileUtil: ProfileUtil,
-    private val fabricPrivacy: FabricPrivacy,
+    fabricPrivacy: FabricPrivacy,
     private val activePlugin: ActivePlugin,
     private val commandQueue: CommandQueue,
     private val loop: Loop,
@@ -117,7 +118,7 @@ class SmsCommunicatorPlugin @Inject constructor(
     private val glucoseStatusProvider: GlucoseStatusProvider,
     private val persistenceLayer: PersistenceLayer,
     private val decimalFormatter: DecimalFormatter
-) : PluginBase(
+) : BaseSmsCommunicatorPlugin(
     PluginDescription()
         .mainType(PluginType.GENERAL)
         .fragmentClass(SmsCommunicatorFragment::class.java.name)
@@ -126,14 +127,13 @@ class SmsCommunicatorPlugin @Inject constructor(
         .shortName(R.string.smscommunicator_shortname)
         .preferencesId(PluginDescription.PREFERENCE_SCREEN)
         .description(R.string.description_sms_communicator),
-    aapsLogger, rh
+    aapsLogger, rh, smsManager, aapsSchedulers, rxBus, fabricPrivacy
 ), SmsCommunicator {
 
-    private val disposable = CompositeDisposable()
+    // private val disposable = CompositeDisposable()
     var allowedNumbers: MutableList<String> = ArrayList()
     @Volatile var messageToConfirm: AuthRequest? = null
     @Volatile var lastRemoteBolusTime: Long = 0
-    override var messages = ArrayList<Sms>()
 
     private val commands = mapOf(
         "BG" to "BG",
@@ -151,19 +151,19 @@ class SmsCommunicatorPlugin @Inject constructor(
         "HELP" to "HELP\nHELP command"
     )
 
-    override fun onStart() {
-        processSettings(null)
-        super.onStart()
-        disposable += rxBus
-            .toObservable(EventPreferenceChange::class.java)
-            .observeOn(aapsSchedulers.io)
-            .subscribe({ event: EventPreferenceChange? -> processSettings(event) }, fabricPrivacy::logException)
-    }
-
-    override fun onStop() {
-        disposable.clear()
-        super.onStop()
-    }
+    // override fun onStart() {
+    //     processSettings(null)
+    //     super.onStart()
+    //     disposable += rxBus
+    //         .toObservable(EventPreferenceChange::class.java)
+    //         .observeOn(aapsSchedulers.io)
+    //         .subscribe({ event: EventPreferenceChange? -> processSettings(event) }, fabricPrivacy::logException)
+    // }
+    //
+    // override fun onStop() {
+    //     disposable.clear()
+    //     super.onStop()
+    // }
 
     override fun preprocessPreferences(preferenceFragment: PreferenceFragmentCompat) {
         super.preprocessPreferences(preferenceFragment)
@@ -204,6 +204,8 @@ class SmsCommunicatorPlugin @Inject constructor(
         }
     }
 
+    // Other process methods (processLOOP, processNSCLIENT, etc.) go here
+
     // cannot be inner class because of needed injection
     class SmsCommunicatorWorker(
         context: Context,
@@ -227,7 +229,7 @@ class SmsCommunicatorPlugin @Inject constructor(
         }
     }
 
-    private fun processSettings(ev: EventPreferenceChange?) {
+    override fun processSettings(ev: EventPreferenceChange?) {
         if (ev == null || ev.isChanged(StringKey.SmsAllowedNumbers.key)) {
             val settings = preferences.get(StringKey.SmsAllowedNumbers)
             allowedNumbers.clear()
@@ -255,7 +257,7 @@ class SmsCommunicatorPlugin @Inject constructor(
         return false
     }
 
-    fun processSms(receivedSms: Sms) {
+    override fun processSms(receivedSms: Sms) {
         if (!isEnabled()) {
             aapsLogger.debug(LTag.SMS, "Ignoring SMS. Plugin disabled.")
             return
@@ -1213,49 +1215,8 @@ class SmsCommunicatorPlugin @Inject constructor(
         }
     }
 
-    override fun sendSMS(sms: Sms): Boolean {
-        sms.text = stripAccents(sms.text)
-
-        try {
-            aapsLogger.debug(LTag.SMS, "Sending SMS to " + sms.phoneNumber + ": " + sms.text)
-            if (sms.text.toByteArray().size <= 140) smsManager?.sendTextMessage(sms.phoneNumber, null, sms.text, null, null)
-            else {
-                val parts = smsManager?.divideMessage(sms.text)
-                smsManager?.sendMultipartTextMessage(
-                    sms.phoneNumber, null, parts,
-                    null, null
-                )
-            }
-            messages.add(sms)
-        } catch (e: IllegalArgumentException) {
-            return if (e.message == "Invalid message body") {
-                val notification = Notification(Notification.INVALID_MESSAGE_BODY, rh.gs(R.string.smscommunicator_message_body), Notification.NORMAL)
-                rxBus.send(EventNewNotification(notification))
-                false
-            } else {
-                val notification = Notification(Notification.INVALID_PHONE_NUMBER, rh.gs(R.string.smscommunicator_invalid_phone_number), Notification.NORMAL)
-                rxBus.send(EventNewNotification(notification))
-                false
-            }
-        } catch (_: SecurityException) {
-            val notification = Notification(Notification.MISSING_SMS_PERMISSION, rh.gs(app.aaps.core.ui.R.string.smscommunicator_missingsmspermission), Notification.NORMAL)
-            rxBus.send(EventNewNotification(notification))
-            return false
-        }
-        rxBus.send(EventSmsCommunicatorUpdateGui())
-        return true
-    }
-
     private fun generatePassCode(): String =
         rh.gs(R.string.smscommunicator_code_from_authenticator_for, otp.name())
-
-    private fun stripAccents(str: String): String {
-        var s = str
-        s = Normalizer.normalize(s, Normalizer.Form.NFD)
-        s = s.replace("\\p{InCombiningDiacriticalMarks}".toRegex(), "")
-        s = s.replace("ł", "l") // hack for Polish language (bug in libs)
-        return s
-    }
 
     private fun areMoreNumbers(allowedNumbers: String?): Boolean {
         return allowedNumbers?.let {
@@ -1315,7 +1276,4 @@ class SmsCommunicatorPlugin @Inject constructor(
         }
     }
 
-    override fun getLatestMsg(phoneNumber: String): Sms? {
-        return messages.lastOrNull { it.phoneNumber == phoneNumber }
-    }
 }

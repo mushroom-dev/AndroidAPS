@@ -25,6 +25,7 @@ import app.aaps.plugins.main.general.food.FoodPlugin
 import app.aaps.plugins.main.general.overview.OverviewPlugin
 import app.aaps.plugins.main.general.persistentNotification.PersistentNotificationPlugin
 import app.aaps.plugins.main.general.smsCommunicator.SmsCommunicatorPlugin
+import app.aaps.plugins.main.general.smsCommunicator.SimpleSmsCommunicatorPlugin
 import app.aaps.plugins.main.general.themes.ThemeSwitcherPlugin
 import app.aaps.plugins.main.iob.iobCobCalculator.IobCobCalculatorPlugin
 import app.aaps.plugins.main.profile.ProfilePlugin
@@ -283,9 +284,15 @@ abstract class PluginsListModule {
     abstract fun bindVersionCheckerPlugin(plugin: VersionCheckerPlugin): PluginBase
 
     @Binds
-    @NotNSClient
+    @NSClient
     @IntoMap
     @IntKey(280)
+    abstract fun bindSimpleSmsCommunicatorPlugin(plugin: SimpleSmsCommunicatorPlugin): PluginBase
+
+    @Binds
+    @NotNSClient
+    @IntoMap
+    @IntKey(281)
     abstract fun bindSmsCommunicatorPlugin(plugin: SmsCommunicatorPlugin): PluginBase
 
     @Binds
@@ -491,6 +498,9 @@ abstract class PluginsListModule {
 
     @Qualifier
     annotation class APS
+
+    @Qualifier
+    annotation class NSClient
 
     @Qualifier
     annotation class Unfinished

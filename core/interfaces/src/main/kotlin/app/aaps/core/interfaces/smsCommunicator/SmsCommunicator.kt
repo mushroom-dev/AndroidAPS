@@ -6,5 +6,6 @@ interface SmsCommunicator {
     fun sendNotificationToAllNumbers(text: String): Boolean
     fun sendSMS(sms: Sms): Boolean
     fun isEnabled(): Boolean
+    fun processSms(receivedSms: Sms)
     fun getLatestMsg(phoneNumber: String): Sms?
 }

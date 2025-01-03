@@ -35,6 +35,7 @@ open class TestModule {
         @PluginsListModule.AllConfigs allConfigs: Map<@JvmSuppressWildcards Int, @JvmSuppressWildcards PluginBase>,
         @PluginsListModule.PumpDriver pumpDrivers: Lazy<Map<@JvmSuppressWildcards Int, @JvmSuppressWildcards PluginBase>>,
         @PluginsListModule.NotNSClient notNsClient: Lazy<Map<@JvmSuppressWildcards Int, @JvmSuppressWildcards PluginBase>>,
+        @PluginsListModule.NSClient nsClient: Lazy<Map<@JvmSuppressWildcards Int, @JvmSuppressWildcards PluginBase>>,
         @PluginsListModule.APS aps: Lazy<Map<@JvmSuppressWildcards Int, @JvmSuppressWildcards PluginBase>>,
         //@PluginsListModule.Unfinished unfinished: Lazy<Map<@JvmSuppressWildcards Int,  @JvmSuppressWildcards PluginBase>>
     )
@@ -43,6 +44,7 @@ open class TestModule {
         if (config.PUMPDRIVERS) plugins += pumpDrivers.get()
         if (config.APS) plugins += aps.get()
         if (!config.NSCLIENT) plugins += notNsClient.get()
+        if (config.NSCLIENT) plugins += nsClient.get()
         //if (config.isUnfinishedMode()) plugins += unfinished.get()
         return plugins.toList().sortedBy { it.first }.map { it.second }
     }
