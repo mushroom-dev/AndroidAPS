@@ -4,10 +4,10 @@
     <!-- SMS Communicator & OTP Authenticator -->
     <string name="smscommunicator">SMS Communicator</string>
     <string name="smscommunicator_shortname">SMS</string>
-    <string name="description_sms_communicator">Remote control AAPS using SMS commands.</string>
+    <string name="description_sms_communicator">Remote control AAPS using SMS commands (receiver).</string>
     <string name="smscommunicator_simple">Simple SMS Communicator</string>
     <string name="smscommunicator_simple_shortname">SMS</string>
-    <string name="description_sms_communicator_simple">Remote control AAPS using SMS commands.</string>
+    <string name="description_sms_communicator_simple">Remote control AAPS using SMS commands (transmitter).</string>
     <string name="smscommunicator_code_from_authenticator_for" comment="This is continuation of sentence: To [ACTION] reply with code">from Authenticator app for: %1$s followed by PIN</string>
     <string name="smscommunicator_otp_pin">Additional mandatory PIN at token end</string>
     <string name="smscommunicator_otp_pin_summary">Additional digits that should be memorised and glued at end of each generated One Time Password</string>

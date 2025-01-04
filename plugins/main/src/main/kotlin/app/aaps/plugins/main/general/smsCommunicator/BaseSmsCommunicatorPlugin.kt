@@ -1,6 +1,10 @@
 package app.aaps.plugins.main.general.smsCommunicator
 
+import android.content.Context
 import android.telephony.SmsManager
+import android.telephony.SmsMessage
+import androidx.work.WorkerParameters
+import androidx.work.workDataOf
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.notifications.Notification
@@ -14,11 +18,15 @@ import app.aaps.core.interfaces.rx.events.EventPreferenceChange
 import app.aaps.core.interfaces.smsCommunicator.Sms
 import app.aaps.core.interfaces.smsCommunicator.SmsCommunicator
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
+import app.aaps.core.objects.workflow.LoggingWorker
+import app.aaps.core.utils.receivers.DataWorkerStorage
 import app.aaps.plugins.main.R
 import app.aaps.plugins.main.general.smsCommunicator.events.EventSmsCommunicatorUpdateGui
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
+import kotlinx.coroutines.Dispatchers
 import java.text.Normalizer
+import javax.inject.Inject
 
 abstract class BaseSmsCommunicatorPlugin(
     pluginDescription: PluginDescription,
@@ -95,4 +103,28 @@ abstract class BaseSmsCommunicatorPlugin(
     override fun getLatestMsg(phoneNumber: String): Sms? {
         return messages.lastOrNull { it.phoneNumber == phoneNumber }
     }
+
+    // cannot be inner class because of needed injection
+    class SmsCommunicatorWorker(
+        context: Context,
+        params: WorkerParameters
+    ) : LoggingWorker(context, params, Dispatchers.IO) {
+
+        @Inject lateinit var smsCommunicator: SmsCommunicator
+        @Inject lateinit var dataWorkerStorage: DataWorkerStorage
+
+        override suspend fun doWorkAndLog(): Result {
+            val bundle = dataWorkerStorage.pickupBundle(inputData.getLong(DataWorkerStorage.STORE_KEY, -1))
+                ?: return Result.failure(workDataOf("Error" to "missing input data"))
+            val format = bundle.getString("format")
+                ?: return Result.failure(workDataOf("Error" to "missing format in input data"))
+            @Suppress("DEPRECATION") val pdus = bundle["pdus"] as Array<*>
+            for (pdu in pdus) {
+                val message = SmsMessage.createFromPdu(pdu as ByteArray, format)
+                smsCommunicator.processSms(Sms(message))
+            }
+            return Result.success()
+        }
+    }
+
 }

@@ -222,13 +222,6 @@ class OverviewPlugin @Inject constructor(
                 addPreference(AdaptiveSwitchPreference(ctx = context, booleanKey = BooleanKey.OverviewShowTreatmentButton, title = R.string.treatments))
                 addPreference(AdaptiveSwitchPreference(ctx = context, booleanKey = BooleanKey.OverviewShowWizardButton, title = R.string.calculator_label))
                 addPreference(AdaptiveSwitchPreference(ctx = context, booleanKey = BooleanKey.OverviewShowInsulinButton, title = app.aaps.core.ui.R.string.configbuilder_insulin))
-                addPreference(AdaptiveSwitchPreference(ctx = context, booleanKey = BooleanKey.SmsAllowRemoteCommands, summary = R.string.client_allow_sms_warning, title = R.string.client_allow_sms))
-                addPreference(
-                    AdaptiveStringPreference(
-                        ctx = context, stringKey = StringKey.SmsReceiverNumber, dialogMessage = R.string.sms_receiver_number_dialog, title = app.aaps.core.ui.R.string.sms_receiver_number,
-                        validatorParams = DefaultEditTextValidator.Parameters(testType = EditTextValidator.TEST_PHONE)
-                    )
-                )
                 addPreference(AdaptiveDoublePreference(ctx = context, doubleKey = DoubleKey.OverviewInsulinButtonIncrement1, dialogMessage = R.string.insulin_increment_button_message, title = R.string.firstinsulinincrement))
                 addPreference(AdaptiveDoublePreference(ctx = context, doubleKey = DoubleKey.OverviewInsulinButtonIncrement2, dialogMessage = R.string.insulin_increment_button_message, title = R.string.secondinsulinincrement))
                 addPreference(AdaptiveDoublePreference(ctx = context, doubleKey = DoubleKey.OverviewInsulinButtonIncrement3, dialogMessage = R.string.insulin_increment_button_message, title = R.string.thirdinsulinincrement))

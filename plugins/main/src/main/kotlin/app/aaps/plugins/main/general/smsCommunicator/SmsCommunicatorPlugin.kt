@@ -3,7 +3,6 @@ package app.aaps.plugins.main.general.smsCommunicator
 import android.content.Context
 import android.content.Intent
 import android.telephony.SmsManager
-import android.telephony.SmsMessage
 import android.text.TextUtils
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
@@ -11,8 +10,6 @@ import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
-import androidx.work.WorkerParameters
-import androidx.work.workDataOf
 import app.aaps.core.data.aps.ApsMode
 import app.aaps.core.data.configuration.Constants
 import app.aaps.core.data.model.GlucoseUnit
@@ -32,7 +29,6 @@ import app.aaps.core.interfaces.iob.IobCobCalculator
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.logging.UserEntryLogger
-import app.aaps.core.interfaces.notifications.Notification
 import app.aaps.core.interfaces.plugin.ActivePlugin
 import app.aaps.core.interfaces.plugin.PluginBase
 import app.aaps.core.interfaces.plugin.PluginDescription
@@ -46,7 +42,6 @@ import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.rx.AapsSchedulers
 import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.rx.events.EventNSClientRestart
-import app.aaps.core.interfaces.rx.events.EventNewNotification
 import app.aaps.core.interfaces.rx.events.EventPreferenceChange
 import app.aaps.core.interfaces.rx.events.EventRefreshOverview
 import app.aaps.core.interfaces.smsCommunicator.Sms
@@ -65,8 +60,6 @@ import app.aaps.core.keys.UnitDoubleKey
 import app.aaps.core.objects.constraints.ConstraintObject
 import app.aaps.core.objects.extensions.generateCOBString
 import app.aaps.core.objects.extensions.round
-import app.aaps.core.objects.workflow.LoggingWorker
-import app.aaps.core.utils.receivers.DataWorkerStorage
 import app.aaps.core.validators.DefaultEditTextValidator
 import app.aaps.core.validators.EditTextValidator
 import app.aaps.core.validators.preferences.AdaptiveIntPreference
@@ -78,12 +71,9 @@ import app.aaps.plugins.main.general.smsCommunicator.activities.SmsCommunicatorO
 import app.aaps.plugins.main.general.smsCommunicator.events.EventSmsCommunicatorUpdateGui
 import app.aaps.plugins.main.general.smsCommunicator.otp.OneTimePassword
 import dagger.android.HasAndroidInjector
-import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
-import kotlinx.coroutines.Dispatchers
 import org.apache.commons.lang3.StringUtils
 import org.joda.time.DateTime
-import java.text.Normalizer
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
@@ -151,20 +141,6 @@ class SmsCommunicatorPlugin @Inject constructor(
         "HELP" to "HELP\nHELP command"
     )
 
-    // override fun onStart() {
-    //     processSettings(null)
-    //     super.onStart()
-    //     disposable += rxBus
-    //         .toObservable(EventPreferenceChange::class.java)
-    //         .observeOn(aapsSchedulers.io)
-    //         .subscribe({ event: EventPreferenceChange? -> processSettings(event) }, fabricPrivacy::logException)
-    // }
-    //
-    // override fun onStop() {
-    //     disposable.clear()
-    //     super.onStop()
-    // }
-
     override fun preprocessPreferences(preferenceFragment: PreferenceFragmentCompat) {
         super.preprocessPreferences(preferenceFragment)
         val distance = preferenceFragment.findPreference(IntKey.SmsRemoteBolusDistance.key) as AdaptiveIntPreference?
@@ -205,29 +181,6 @@ class SmsCommunicatorPlugin @Inject constructor(
     }
 
     // Other process methods (processLOOP, processNSCLIENT, etc.) go here
-
-    // cannot be inner class because of needed injection
-    class SmsCommunicatorWorker(
-        context: Context,
-        params: WorkerParameters
-    ) : LoggingWorker(context, params, Dispatchers.IO) {
-
-        @Inject lateinit var smsCommunicatorPlugin: SmsCommunicatorPlugin
-        @Inject lateinit var dataWorkerStorage: DataWorkerStorage
-
-        override suspend fun doWorkAndLog(): Result {
-            val bundle = dataWorkerStorage.pickupBundle(inputData.getLong(DataWorkerStorage.STORE_KEY, -1))
-                ?: return Result.failure(workDataOf("Error" to "missing input data"))
-            val format = bundle.getString("format")
-                ?: return Result.failure(workDataOf("Error" to "missing format in input data"))
-            @Suppress("DEPRECATION") val pdus = bundle["pdus"] as Array<*>
-            for (pdu in pdus) {
-                val message = SmsMessage.createFromPdu(pdu as ByteArray, format)
-                smsCommunicatorPlugin.processSms(Sms(message))
-            }
-            return Result.success()
-        }
-    }
 
     override fun processSettings(ev: EventPreferenceChange?) {
         if (ev == null || ev.isChanged(StringKey.SmsAllowedNumbers.key)) {

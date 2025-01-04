@@ -17,6 +17,9 @@ import dagger.Module
 import dagger.Provides
 import dagger.Reusable
 import dagger.android.HasAndroidInjector
+import app.aaps.core.interfaces.smsCommunicator.SmsCommunicator
+import app.aaps.plugins.main.general.smsCommunicator.SimpleSmsCommunicatorPlugin
+import app.aaps.plugins.main.general.smsCommunicator.SmsCommunicatorPlugin
 
 @Suppress("unused")
 @Module(
@@ -45,6 +48,19 @@ open class AppModule {
         if (config.NSCLIENT) plugins += nsClient.get()
         //if (config.isUnfinishedMode()) plugins += unfinished.get()
         return plugins.toList().sortedBy { it.first }.map { it.second }
+    }
+
+    @Provides
+    fun provideSmsCommunicator(
+        config: Config,
+        simpleSmsCommunicatorPlugin: SimpleSmsCommunicatorPlugin,
+        smsCommunicatorPlugin: SmsCommunicatorPlugin
+    ): SmsCommunicator {
+        return if (config.NSCLIENT) {
+            simpleSmsCommunicatorPlugin
+        } else {
+            smsCommunicatorPlugin
+        }
     }
 
     @Module

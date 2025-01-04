@@ -33,6 +33,7 @@ import app.aaps.pump.virtual.di.VirtualPumpModule
 import app.aaps.shared.impl.di.LoggerModule
 import app.aaps.shared.impl.di.SharedImplModule
 import app.aaps.ui.di.UiModule
+import app.aaps.plugins.main.di.SMSCommunicatorModule
 import app.aaps.workflow.di.WorkflowModule
 import dagger.BindsInstance
 import dagger.Component

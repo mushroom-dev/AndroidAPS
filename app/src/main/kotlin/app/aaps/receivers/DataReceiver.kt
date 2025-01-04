@@ -14,7 +14,7 @@ import app.aaps.core.utils.extensions.copyLong
 import app.aaps.core.utils.extensions.copyString
 import app.aaps.core.utils.receivers.BundleLogger
 import app.aaps.core.utils.receivers.DataWorkerStorage
-import app.aaps.plugins.main.general.smsCommunicator.SmsCommunicatorPlugin
+import app.aaps.plugins.main.general.smsCommunicator.BaseSmsCommunicatorPlugin
 import app.aaps.plugins.source.DexcomPlugin
 import app.aaps.plugins.source.GlimpPlugin
 import app.aaps.plugins.source.MM640gPlugin
@@ -86,7 +86,7 @@ open class DataReceiver : DaggerBroadcastReceiver() {
                     }.build()).build()
 
             Telephony.Sms.Intents.SMS_RECEIVED_ACTION ->
-                OneTimeWorkRequest.Builder(SmsCommunicatorPlugin.SmsCommunicatorWorker::class.java)
+                OneTimeWorkRequest.Builder(BaseSmsCommunicatorPlugin.SmsCommunicatorWorker::class.java)
                     .setInputData(dataWorkerStorage.storeInputData(bundle, intent.action)).build()
 
             Intents.DEXCOM_BG, Intents.DEXCOM_G7_BG   ->
