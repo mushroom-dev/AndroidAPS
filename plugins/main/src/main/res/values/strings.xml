@@ -34,8 +34,8 @@
     <string name="sms_timeout_while_waiting">Timeout while waiting for finish of previous pump communication</string>
     <string name="smscommunicator_allowednumbers">Allowed phone numbers</string>
     <string name="smscommunicator_allowednumbers_summary">+XXXXXXXXXX;+YYYYYYYYYY</string>
-    <string name="smscommunicator_bolus_reply_with_code">To deliver bolus %1$.2fU reply with code %2$s</string>
-    <string name="smscommunicator_meal_bolus_reply_with_code">To deliver meal bolus %1$.2fU reply with code %2$s</string>
+    <string name="smscommunicator_bolus_reply_with_code">To deliver bolus %1$.2fU reply with code %2$s. Current IOB is %3$.2fU</string>
+    <string name="smscommunicator_meal_bolus_reply_with_code">To deliver meal bolus %1$.2fU reply with code %2$s. Current IOB is %3$.2fU</string>
     <string name="smscommunicator_temptarget_with_code">To set the Temp Target %1$s reply with code %2$s</string>
     <string name="smscommunicator_temptarget_cancel">To cancel Temp Target reply with code %1$s</string>
     <string name="smscommunicator_stops_ns_with_code">To disable the SMS Remote Service reply with code %1$s.\n\nKeep in mind that you\'ll able to reactivate it directly from the AAPS master smartphone only.</string>
@@ -46,6 +46,9 @@
     <string name="smscommunicator_remote_bolus_min_distance">How many minutes must elapse, at least, between one bolus and the next</string>
     <string name="smscommunicator_remote_bolus_min_distance_caveat">For your safety, to edit this preference you need to add at least 2 phone numbers.</string>
     <string name="smscommunicator_bolus_delivered">Bolus %1$.2f U delivered successfully</string>
+    <string name="smscommunicator_boluscarbs_reply_with_code">To deliver bolus %1$.2fU and enter %2$dg at %3$s reply with code %4$s. Current IOB is %5$.2fU</string>
+    <string name="smscommunicator_boluscarbs_delivered">Bolus %1$.2fU delivered and carbs %2$dg entered successfully</string>
+    <string name="smscommunicator_boluscarbs_failed">Bolus and carbs failed</string>
     <string name="smscommunicator_meal_bolus_delivered">Meal Bolus %1$.2f U delivered successfully</string>
     <string name="smscommunicator_meal_bolus_delivered_tt">Target %1$s for %2$d minutes</string>
     <string name="smscommunicator_tt_set">Target %1$s for %2$d minutes set successfully</string>
@@ -185,7 +188,7 @@
     <string name="statuslights_patch_pump_age">patch pump age</string>
     <string name="patch_pump">Patch pump</string>
 
-    <!-- Overview -->
+    <!-- Overview Preferences -->
     <string name="show_statuslights">Show status lights on home screen</string>
     <string name="statuslights_cage_warning">Threshold warning cannula age [h]</string>
     <string name="statuslights_cage_critical">Threshold critical cannula age [h]</string>
